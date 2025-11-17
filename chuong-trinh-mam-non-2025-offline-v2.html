@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <meta name="theme-color" content="#16a34a" />
+  <title>Khám phá Xứ Sở Tái Tạo – Bản chạy cục bộ</title>
+
+  <!-- BẢN ĐỘC LẬP: không dùng Tailwind, không Google Fonts, không CDN -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      line-height: 1.6;
+      background-color: #F0FDF4;
+      color: #1f2937;
+      font-size: 16px;
+    }
+    img { display: block; max-width: 100%; height: auto; }
+    button { font: inherit; cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    .section-text { max-width: 52rem; margin-inline: auto; }
+    .hidden { display: none !important; }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .card.pad { padding: 18px; }
+    .card.soft { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+
+    .hero { text-align: center; padding: 24px; }
+    @media (min-width: 768px) { .hero { padding: 40px; } }
+    .title-main {
+      font-weight: 900;
+      font-size: clamp(1.4rem, 3.8vw, 2.25rem);
+      color: #166534;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+    }
+    .title-sub {
+      margin-top: .5rem;
+      font-weight: 900;
+      font-size: clamp(1.4rem, 3.8vw, 2.25rem);
+      color: #2563eb;
+    }
+    .emojiline {
+      font-weight: 800;
+      color: #15803d;
+      font-size: clamp(1rem, 2.6vw, 1.25rem);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+      gap: 16px;
+    }
+    @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 1024px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+    .pill-title {
+      display: inline-block;
+      margin: 28px auto 18px;
+      padding: 10px 18px;
+      border-radius: 9999px;
+      font-weight: 900;
+      font-size: clamp(1.1rem, 3.6vw, 1.4rem);
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    .pill-yellow { background: #facc15; color: #713f12; }
+    .pill-blue   { background: #60a5fa; color: #1e3a8a; }
+    .pill-green  { background: #34d399; color: #064e3b; }
+
+    .topbar-yellow { border-top: 4px solid #f59e0b; }
+    .topbar-blue   { border-top: 4px solid #60a5fa; }
+    .topbar-green  { border-top: 4px solid #34d399; }
+
+    .muted { color: #4b5563; }
+
+    .media { position: relative; width: 100%; height: 190px; overflow: hidden; }
+    @media (min-width: 640px) { .media { height: 200px; } }
+    .media > img { width: 100%; height: 100%; object-fit: cover; }
+
+    .card-activity {
+      transition: transform .2s ease, box-shadow .2s ease;
+      cursor: pointer;
+    }
+    .card-activity:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,0,0,0.10); }
+
+    .card-body { padding: 14px 16px; text-align: left; }
+    .card-title {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #111827;
+      margin: 4px 0 8px;
+    }
+    .clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      display: none;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,.7);
+      padding: 16px;
+      z-index: 50;
+    }
+    .modal-backdrop.is-open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 16px 36px rgba(0,0,0,.22);
+      width: 100%; max-width: 640px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .modal-media { width: 100%; height: 220px; overflow: hidden; }
+    @media (min-width: 640px) { .modal-media { height: 260px; } }
+    .modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .modal-title { font-weight: 800; font-size: clamp(1.15rem, 3.2vw, 1.5rem); color:#065f46; margin: 0; }
+    .modal-desc { color: #374151; overflow-y: auto; max-height: 220px; }
+    .btn {
+      width: 100%; border: 0; border-radius: 12px;
+      padding: 12px 16px; font-weight: 800;
+      background: #16a34a; color: #fff;
+    }
+    .btn:active { transform: translateY(1px); }
+
+    .section-header {
+      text-align: center;
+      font-weight: 900;
+      font-size: clamp(1.25rem, 3.6vw, 2rem);
+      color: #111827;
+      margin: 0 0 8px;
+    }
+    .section-sub { text-align: center; color: #4b5563; margin-bottom: 16px; }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #e0f2fe; }
+    ::-webkit-scrollbar-thumb { background: #34d399; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+  </style>
+</head>
+<body>
+
+  <div id="activityModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-media">
+        <img id="modalImage" alt="Hình ảnh hoạt động" width="1280" height="720" />
+      </div>
+      <div class="modal-body">
+        <h3 id="modalTitle" class="modal-title">Tên Hoạt Động</h3>
+        <p id="modalDesc" class="modal-desc">Mô tả chi tiết hoạt động.</p>
+        <button class="btn" id="modalCloseBtn">Đã hiểu!</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <header class="card hero">
+      <h1 class="title-main">Khu Trải Nghiệm Giáo Dục Cánh Buồm Xanh</h1>
+      <h2 class="title-sub">“Hành trình Khám phá Xứ Sở Tái Tạo”</h2>
+
+      <div class="section-text">
+        <p class="muted">
+          Ở một đất nước xinh đẹp và yên bình, có một vùng đất kỳ diệu mang tên <strong>Xứ Sở Tái Tạo</strong>. Tại đây, ngày qua ngày, người dân cùng nhau gìn giữ và tái tạo mọi điều xung quanh — từ chiếc lá khô, mảnh vải cũ, cho tới những ý tưởng cũ tưởng như đã bị lãng quên.
+        </p>
+        <p class="emojiline">🌿 Chào mừng đến với Xứ Sở Tái Tạo! 🌿</p>
+        <p class="muted">
+          Một vùng đất nhiệm màu, nơi mỗi món đồ cũ kỹ đều được thổi hồn sống mới, nơi thiên nhiên và con người hòa quyện trong hành trình bảo vệ môi trường đầy sắc màu và cảm hứng.
+        </p>
+      </div>
+    </header>
+
+    <section>
+      <h2 class="section-header">🌍 Cấu trúc Xứ Sở – 3 Vùng Đất Diệu Kỳ</h2>
+      <p class="section-sub section-text">
+        Mỗi vùng đất là một câu chuyện, một “modun” trải nghiệm riêng giúp các bạn nhỏ hiểu hơn về quá khứ, hiện tại và tương lai của Trái Đất qua lăng kính tái chế – tái tạo.
+      </p>
+
+      <div class="grid">
+        <div class="card pad soft topbar-yellow">
+          <h3 style="color:#b45309; font-weight:900; font-size:1.2rem;">🕰️ Vùng Đất Quá Khứ</h3>
+          <p class="muted">Nơi lưu giữ ký ức và những kỷ vật xưa cũ. Bạn sẽ được tìm hiểu về nguồn gốc, hành trình của từng vật dụng – từ chiếc áo cũ của ông bà, đến những món đồ từng có giá trị đặc biệt.</p>
+        </div>
+        <div class="card pad soft topbar-blue">
+          <h3 style="color:#2563eb; font-weight:900; font-size:1.2rem;">♻️ Vùng Đất Tái Chế</h3>
+          <p class="muted">Tại đây, mọi thứ tưởng chừng bỏ đi lại được biến hóa ngoạn mục. Các bạn nhỏ sẽ được tham gia hoạt động sáng tạo, làm đồ chơi từ chai nhựa, tái thiết kế quần áo cũ, hay học phân loại rác.</p>
+        </div>
+        <div class="card pad soft topbar-green">
+          <h3 style="color:#16a34a; font-weight:900; font-size:1.2rem;">🌱 Vùng Đất Phục Sinh</h3>
+          <p class="muted">Nơi bắt đầu một sự sống mới. Những mầm cây mọc lên từ phân ủ, khu vườn rau tái tạo, hay căn nhà nhỏ từ vật liệu tái chế — tất cả là minh chứng cho sức sống bền bỉ.</p>
+        </div>
+      </div>
+    </section>
+
+    <section style="margin-top: 20px;">
+      <div class="card pad hero" style="text-align:center;">
+        <div class="section-text">
+          <p class="muted">Khi đặt chân tới đây các bạn sẽ được chào đón bởi các bạn linh vật của từng vùng đất và các cư dân ở Xứ Sở Tái Tạo.</p>
+          <p class="muted">Khi xuống xe các bạn sẽ được hướng dẫn xếp hàng ngay ngắn, cùng nhau tới các lán nghỉ để cất đồ đạc, hành lý.</p>
+          <p class="muted">Bước qua trạm gác cổng, các bạn sẽ được nhìn thấy 3 cánh cổng khác dẫn đến các vùng đất. Mỗi vùng đất lại mang một câu chuyện riêng, và các vị lữ khách nhí – chính là các bạn – sẽ được khám phá, trải nghiệm những điều thú vị ở từng vùng đất tại Xứ Sở Tái Tạo này!</p>
+        </div>
+        <div>
+          <span class="pill-title" style="background:#fee2e2; color:#b91c1c;">HÀNH TRÌNH KHÁM PHÁ 3 VÙNG ĐẤT BẮT ĐẦU!</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="text-align:center; margin-top: 18px;">
+      <h2 class="pill-title pill-yellow">HÀNH TRÌNH I: 🕰️ VÙNG ĐẤT QUÁ KHỨ (8h30 - 9h30)</h2>
+      <p class="section-sub section-text">Cùng quay ngược thời gian, gặp gỡ thế giới khủng long và những câu chuyện lịch sử thú vị.</p>
+      <div id="pane-past" class="grid"></div>
+    </section>
+
+    <section style="text-align:center;">
+      <h2 class="pill-title pill-blue">HÀNH TRÌNH II: ♻️ VÙNG ĐẤT TÁI CHẾ (9h30 - 11h20)</h2>
+      <p class="section-sub section-text">Nơi mọi thứ tưởng như bỏ đi lại được “hô biến” thành những sản phẩm mới đầy sáng tạo.</p>
+      <div id="pane-recycling" class="grid"></div>
+    </section>
+
+    <section style="text-align:center; margin: 20px 0;">
+      <div class="card pad" style="max-width:700px; margin:0 auto;">
+        <h2 style="color:#c2410c; font-weight:900; font-size: clamp(1.2rem, 3.4vw, 1.6rem); margin:0 0 4px;">🥪 NGHỈ TRƯA (11h30) 🍟</h2>
+        <p class="muted" style="margin:0;">VỀ LÁN NGHỈ ĂN TRƯA VÀ NGHỈ TRƯA</p>
+      </div>
+    </section>
+
+    <section style="text-align:center;">
+      <h2 class="pill-title pill-green">HÀNH TRÌNH III: 🌱 VÙNG ĐẤT PHỤC SINH (14h00 - 16h00)</h2>
+      <p class="section-sub section-text">Khép lại chuyến đi bằng hành trình gieo mầm, tái tạo và vui chơi giữa thiên nhiên.</p>
+      <div id="pane-rebirth" class="grid"></div>
+    </section>
+
+    <section style="text-align:center; margin: 22px 0;">
+      <div class="card pad" style="max-width:700px; margin:0 auto;">
+        <h2 style="color:#7e22ce; font-weight:900; font-size: clamp(1.2rem, 3.4vw, 1.6rem); margin:0 0 4px;">🚌 HẸN GẶP LẠI! (16h30) 👋</h2>
+        <p class="muted" style="margin:0;">Các bạn học sinh tập trung về lán nghỉ, kiểm tra đồ đạc, điểm danh và lên xe trở về trường. Hẹn gặp lại các bạn nhỏ!</p>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    const OFFLINE_PLACEHOLDER = (function () {
+      const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'><defs/><rect width='100%' height='100%' fill='%23e5e7eb'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial' font-size='28' fill='%236b7280'>Hình ảnh sẽ hiển thị khi có mạng</text></svg>";
+      return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    })();
+
+    const programData = {
+      past: [
+        {
+          title: "Rạp chiếu phim 3D",
+          description: "Tha hồ đắm chìm trong thế giới thực tế ảo – hành trình đưa bạn bước qua ranh giới giữa thực và ảo với hình ảnh sống động và âm thanh chân thực.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/XkVJJfdsicfpslDT.png"
+        },
+        {
+          title: "Khu vườn Tiền sử",
+          description: "Quay về quá khứ thời Tiền sử, khám phá thế giới khủng long hoạt hình đang chuyển động và tìm hiểu nguyên nhân tuyệt chủng do biến đổi khí hậu.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/LTfMWMnpvzxTYIhU.png"
+        },
+        {
+          title: "Huấn luyện Chiến binh Xanh",
+          description: "Rèn luyện tinh thần quả cảm, sự khéo léo, dẻo dai. Vượt qua các thử thách khó nhằn của Cánh Buồm Xanh như một chiến binh nhí thực thụ.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/zCuSLdOQfczaJpGB.png"
+        },
+        {
+          title: "Cột cờ Hà Nội",
+          description: "Tìm hiểu về lịch sử hình thành của di tích Cột cờ Hà Nội và tham gia trò chơi vận động “trượt cỏ” đầy hào hứng.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/jMhvrHsHEufXLAXO.png"
+        }
+      ],
+      recycling: [
+        {
+          title: "Mê cung Tái chế",
+          description: "Hóa thân thành “nhà thám hiểm nhí” trong mê cung tái chế, dùng trí tuệ để giải mã manh mối và cùng nhau tìm ra lối thoát.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/oDViqEanIcVujRvR.jpeg"
+        },
+        {
+          title: "Bóng nước kỳ thú",
+          description: "Trải nghiệm cảm giác lăn tròn trong những quả bóng nước khổng lồ – vừa vui nhộn vừa rèn luyện khả năng giữ thăng bằng.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/MDTtTSAWeGjqlldH.png"
+        },
+        {
+          title: "Máy lọc nước Mini",
+          description: "Xem cách thực hiện một chiếc máy lọc nước cực kỳ đơn giản từ các nguyên liệu quen thuộc: cát, sỏi, than, vải… và hiểu hơn về vòng tuần hoàn của nước.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/vOyBCiqqGTVoNeNf.jpeg"
+        },
+        {
+          title: "Lớp học Bảo vệ Môi trường",
+          description: "Cùng học cách phân loại rác, hiểu về các loại rác tái chế – không tái chế, và cùng nhau xây dựng thói quen sống xanh.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/LmLbhGxQOWqaPhDR.jpeg"
+        }
+      ],
+      rebirth: [
+        {
+          title: "Nhà máy Sáng tạo Xanh",
+          description: "Các bé sẽ được dán, cắt, tô màu từ những tấm bìa cứng nhiều màu sắc để tạo nên sản phẩm riêng của mình.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/ZrxwhWynNwJiPFRd.png"
+        },
+        {
+          title: "Phòng thí nghiệm Hóa học",
+          description: "Thử sức với những thí nghiệm bong bóng, phản ứng thú vị – vừa an toàn vừa kích thích trí tò mò khoa học.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/IYyeOhWvXsCVwymk.jpeg"
+        },
+        {
+          title: "Mầm xanh Tái tạo",
+          description: "Tận tay gieo những hạt giống xuống đất, chăm sóc và theo dõi hành trình nảy mầm – lớn lên của cây, nuôi dưỡng tình yêu thiên nhiên.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/fNFfwyGtvoqjHZlU.jpeg"
+        },
+        {
+          title: "Chiến binh Sasuke",
+          description: "Chinh phục đường chạy chướng ngại vật như trong trò chơi Sasuke phiên bản nhí, rèn luyện thể lực và sự dũng cảm.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/GIkAUkzSSgODIauA.jpeg"
+        },
+        {
+          title: "Golf",
+          description: "Thử sức trở thành tay golf nhí với những cú đánh bóng vui nhộn nhưng cũng không kém phần tập trung.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/RbEewVzzobWGlJuB.jpeg"
+        },
+        {
+          title: "Ném vòng",
+          description: "Rèn luyện sự khéo léo và chính xác qua trò chơi ném vòng trúng đích.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/WzXZmjGakWmMLMDm.jpeg"
+        },
+        {
+          title: "Khám phá Đất Việt",
+          description: "Cùng phân loại các loại hoa quả, con vật theo từng vùng miền – vừa chơi vừa học về văn hoá Việt Nam.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/fNFfwyGtvoqjHZlU.jpeg"
+        },
+        {
+          title: "Bịt mắt bắt Dê",
+          description: "Tham quan khu nuôi dê, cho dê ăn và vuốt ve chúng thật nhẹ nhàng – một trải nghiệm gần gũi với thế giới động vật.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/fNFfwyGtvoqjHZlU.jpeg"
+        },
+        {
+          title: "Rác biến hình – Ngôi nhà Sáng tạo",
+          description: "Tô màu, dán trang trí chiếc cốc giấy thành sản phẩm tái chế đáng yêu để mang về nhà làm quà kỷ niệm.",
+          img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663037979867/fNFfwyGtvoqjHZlU.jpeg"
+        }
+      ]
+    };
+
+    function createActivityCard(item) {
+      const wrap = document.createElement('div');
+      wrap.className = 'card card-activity';
+
+      const media = document.createElement('div');
+      media.className = 'media';
+
+      const img = document.createElement('img');
+      img.alt = item.title;
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.referrerPolicy = 'no-referrer';
+      img.src = item.img;
+      img.onerror = () => { img.src = OFFLINE_PLACEHOLDER; };
+
+      media.appendChild(img);
+      wrap.appendChild(media);
+
+      const body = document.createElement('div');
+      body.className = 'card-body';
+
+      const h3 = document.createElement('h3');
+      h3.className = 'card-title clamp-2';
+      h3.textContent = item.title;
+
+      const p = document.createElement('p');
+      p.className = 'muted clamp-3';
+      p.textContent = item.description;
+
+      body.appendChild(h3);
+      body.appendChild(p);
+      wrap.appendChild(body);
+
+      wrap.addEventListener('click', () => openModal(item));
+      return wrap;
+    }
+
+    function renderPane(paneId, data) {
+      const pane = document.getElementById(paneId);
+      pane.innerHTML = '';
+      data.forEach(item => pane.appendChild(createActivityCard(item)));
+    }
+
+    const modalBackdrop = document.getElementById('activityModalBackdrop');
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDesc  = document.getElementById('modalDesc');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    let lastFocus = null;
+
+    function openModal(item) {
+      lastFocus = document.activeElement;
+      modalTitle.textContent = item.title;
+      modalDesc.textContent = item.description;
+      modalImage.src = item.img;
+      modalImage.onerror = () => { modalImage.src = OFFLINE_PLACEHOLDER; };
+      document.body.style.overflow = 'hidden';
+      modalBackdrop.classList.add('is-open');
+      modalCloseBtn.focus();
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove('is-open');
+      document.body.style.overflow = 'auto';
+      if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+    }
+
+    modalBackdrop.addEventListener('click', closeModal);
+    modalCloseBtn.addEventListener('click', closeModal);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderPane('pane-past', programData.past);
+      renderPane('pane-recycling', programData.recycling);
+      renderPane('pane-rebirth', programData.rebirth);
+    });
+  </script>
+</body>
+</html>
